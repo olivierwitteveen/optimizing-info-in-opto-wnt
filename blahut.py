@@ -57,12 +57,12 @@ def weight_step(convergence_goal, max_iter, weightvec, p_y_given_x):
     The function takes as input:
     - convergence goal: goal for I_U - I_L (scalar)
     - max_iter: maximum number of iterations (scalar)
-    - yvec: the values of the random variable Y (Mx1 array)
-    - weightvec: the weight of each atom of X (Kx1 array)
+    - yvec: the values of the random variable Y (M-dim array)
+    - weightvec: the weight of each atom of X (K-dim array)
     - p_y_given_x: the conditional probability mass function of Y given X (MxK array)
     The function returns as output:
     - err: the difference I_U - I_L (scalar)
-    - weightvec: optimised weights for given position (Kx1 array)
+    - weightvec: optimised weights for given position (K-dim array)
     """
     I_L, I_U = 0, 1
     tau = 0
@@ -72,25 +72,33 @@ def weight_step(convergence_goal, max_iter, weightvec, p_y_given_x):
     err = I_U - I_L
     return err, weightvec
 
+@njit
 def pos_step(yvec, weightvec, p_y_given_x, d_pyx_dx):
     """
     When starting out with a discrete prior with K atoms, this function will return the gradients of the positions of the atoms.
-    - yvec: the values of the random variable Y (Mx1 array)
-    - weightvec: the weight of each atom of X (Kx1 array)
+    - yvec: the values of the random variable Y (M-dim array)
+    - weightvec: the weight of each atom of X (K-dim array)
     - p_y_given_x: the conditional probability mass function of Y given X (MxK array)
+    - d_pyx_dx: the gradient of the conditional probability mass function of Y given X with respect to the positions of the atoms (MxK array)
     The function returns as output:
-    - pos_grad: the gradient of the positions of the atoms (Kx1 array)
+    - pos_grad: the gradient of the positions of the atoms (K-dim array)
     """
 
     # discretisation steps
     dy = yvec[1] - yvec[0]
 
     # output distribution
-    p_y = np.matmul(p_y_given_x, weightvec) # Mx1 array
+    p_y = np.zeros(len(yvec))
+    for i in range(len(yvec)):
+        for j in range(len(weightvec)):
+            p_y[i] += p_y_given_x[i,j]*weightvec[j]
 
     # position gradient 
-    pos_grad = np.sum(d_pyx_dx*np.log((p_y_given_x+1e-10)/(p_y+1e-10)), axis=0)*dy # Kx1 array
-    pos_grad = pos_grad.reshape(-1,1) # Kx1 array
+    pos_grad = np.zeros(len(weightvec))
+    for i in range(len(yvec)):
+        for j in range(len(weightvec)):
+            pos_grad[j] += d_pyx_dx[i,j]*np.log((p_y_given_x[i,j]+1e-10)/(p_y[i]+1e-10))*dy
+
     pos_grad = pos_grad*weightvec
 
     return pos_grad
