@@ -18,7 +18,7 @@ All code and processed experimental data needed to reproduce the figures are con
 - `spatial_data/`: processed experimental data from a repeat experiment for 12.5 hours opto-Wnt. Contains TopFlash expression, `g.npy`, and the associated xy-coordinates `coordinates.npy`. 
 
 ### Notebooks
-- `figure_notebook.ipynb`: code to generate all paper figures. 
+- `figure_notebook.ipynb`: code to generate all figures. 
 - `prior_optimization_example.ipynb`: standalone notebook with an example for how to implement the Blahut-Arimoto algorithm and its adaptation for discrete priors. 
 
 ### Scripts
